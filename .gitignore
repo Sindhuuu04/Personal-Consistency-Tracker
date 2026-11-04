@@ -1,20 +1,25 @@
-# Dependencies
-node_modules/
-
-# Build output
-target/
-dist/
-build/
-coverage/
-
 # Environment variables and secrets
 .env
 .env.*
 !.env.example
 
-# Logs
+# Java / Spring Boot
+**/target/
+*.class
+*.jar
+*.war
 *.log
-logs/
+
+# H2 database files
+backend/data/
+**/*.mv.db
+**/*.trace.db
+
+# Node / React
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
 
 # IDE settings
 .idea/
@@ -23,12 +28,13 @@ logs/
 # Operating system files
 .DS_Store
 Thumbs.db
-
-# Database files
-*.mv.db
-*.trace.db
-backend/data/
+desktop.ini
 
 # Temporary files
 *.tmp
+*.bak
 *.swp
+
+# Test reports and coverage
+**/coverage/
+**/surefire-reports/
