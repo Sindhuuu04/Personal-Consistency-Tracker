@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/consistency?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+  task.scheduling.pool.size: 3
+app:
+  jwt-secret: ${JWT_SECRET:change-this-secret-to-something-long-and-random-32+}
+telegram:
+  token: ${TELEGRAM_BOT_TOKEN:}
+  morning-hour: 8
+  evening-hour: 20
+  final-hour: 22
