@@ -15,6 +15,12 @@ public class Model {
         private String timezone = "Asia/Kolkata";
         private Long telegramChatId;
         @Column(unique = true) private String linkCode;
+        private String githubUsername;
+        private String leetcodeUsername;
+        @Column(length = 300) private String linkedinUrl;
+        @Column(length = 300) private String mediumUrl;
+        @Column(length = 300) private String substackUrl;
+        @Column(length = 300) private String youtubeUrl;
         private LocalDateTime createdAt = LocalDateTime.now();
     }
 

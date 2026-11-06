@@ -14,7 +14,7 @@ import java.util.*;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class ApiController {
-    final TrackerService t; final UserRepo users; final PasswordEncoder enc; final JwtService jwt;
+    final TrackerService t; final UserRepo users; final PasswordEncoder enc; final JwtService jwt; final SyncService syncSvc;
 
     record Cred(@Email @NotBlank String email, @Size(min = 8, message = "min 8 characters") String password, String timezone) {}
     record Act(LocalDate date, @NotBlank String type, @NotNull Integer score, String evidenceUrl, String notes) {}
@@ -126,4 +126,45 @@ public class ApiController {
         t.setSteps(uid, day(uid, s.date()), s.steps(), s.source());
         return Map.of("ok", true);
     }
+    // ----- settings + auto-sync -----
+    record SettingsIn(String githubUsername, String leetcodeUsername, String linkedinUrl, String mediumUrl, String substackUrl, String youtubeUrl) {}
+
+    static String handle(String s, String host, String regex, String label) {
+        if (TrackerService.blank(s)) return null;
+        String v = s.trim().replaceAll("(?i)^https?://(www\\.)?" + host + "/(u/)?", "").replaceAll("^@|/+$", "");
+        if (!v.matches(regex)) throw new IllegalArgumentException(label + " username looks invalid. Enter just the username, e.g. Sindhuuu04");
+        return v;
+    }
+
+    static String link(String s, String label) {
+        if (TrackerService.blank(s)) return null;
+        String v = s.trim();
+        if (!v.startsWith("https://") || v.length() > 300 || v.contains(" ")) throw new IllegalArgumentException(label + " must be a full https:// link");
+        return v;
+    }
+
+    Map<String, Object> settingsOf(User u) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("githubUsername", u.getGithubUsername()); m.put("leetcodeUsername", u.getLeetcodeUsername());
+        m.put("linkedinUrl", u.getLinkedinUrl()); m.put("mediumUrl", u.getMediumUrl());
+        m.put("substackUrl", u.getSubstackUrl()); m.put("youtubeUrl", u.getYoutubeUrl());
+        return m;
+    }
+
+    @GetMapping("/settings")
+    public Map<String, Object> settings(@AuthenticationPrincipal Long uid) { return settingsOf(users.findById(uid).orElseThrow()); }
+
+    @PutMapping("/settings")
+    public Map<String, Object> saveSettings(@AuthenticationPrincipal Long uid, @RequestBody SettingsIn s) {
+        User u = users.findById(uid).orElseThrow();
+        u.setGithubUsername(handle(s.githubUsername(), "github\\.com", "[A-Za-z0-9-]{1,39}", "GitHub"));
+        u.setLeetcodeUsername(handle(s.leetcodeUsername(), "leetcode\\.com", "[A-Za-z0-9_.-]{1,40}", "LeetCode"));
+        u.setLinkedinUrl(link(s.linkedinUrl(), "LinkedIn")); u.setMediumUrl(link(s.mediumUrl(), "Medium"));
+        u.setSubstackUrl(link(s.substackUrl(), "Substack")); u.setYoutubeUrl(link(s.youtubeUrl(), "YouTube"));
+        users.save(u);
+        return settingsOf(u);
+    }
+
+    @PostMapping("/sync")
+    public Map<String, String> sync(@AuthenticationPrincipal Long uid) { return syncSvc.sync(uid); }
 }
